@@ -314,6 +314,23 @@ struct xdpw_wlr_output *xdpw_wlr_output_first(struct wl_list *output_list) {
 	return NULL;
 }
 
+struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct wl_list *output_list) {
+
+	logprint(DEBUG, "wlroots: output chooser called");
+	struct xdpw_wlr_output* (*chooser_functions[])(struct wl_list*) = {
+		xdpw_wlr_output_first
+	};
+	int N = sizeof(chooser_functions)/sizeof(chooser_functions[0]);
+	struct xdpw_wlr_output *output;
+	for (int i = 0; i<N; i++) {
+		output = chooser_functions[i](output_list);
+		if (output != NULL) {
+			return output;
+		}
+	}
+	return output;
+}
+
 struct xdpw_wlr_output *xdpw_wlr_output_find_by_name(struct wl_list *output_list,
 		const char* name) {
 	struct xdpw_wlr_output *output, *tmp;

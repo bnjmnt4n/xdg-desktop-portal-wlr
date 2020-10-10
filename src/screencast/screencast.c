@@ -56,7 +56,7 @@ int setup_outputs(struct xdpw_screencast_context *ctx, struct xdpw_session *sess
 			abort();
 		}
 	} else {
-		out = xdpw_wlr_output_first(&ctx->output_list);
+		out = xdpw_wlr_output_chooser(&ctx->output_list);
 		if (!out) {
 			logprint(ERROR, "wlroots: no output found");
 			abort();
