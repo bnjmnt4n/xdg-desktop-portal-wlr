@@ -314,10 +314,129 @@ struct xdpw_wlr_output *xdpw_wlr_output_first(struct wl_list *output_list) {
 	return NULL;
 }
 
+static bool exec_chooser_dmenu(char *const argv[], char *buffer, unsigned long buffer_maxlength, char *name, unsigned long name_maxlength) {
+	int p1[2]; //p -> c
+	int p2[2]; //c -> p
+
+	if (pipe(p1) == -1) {
+		logprint(ERROR,"Failed to open pipe");
+		return false;
+	}
+	if (pipe(p2) == -1) {
+		logprint(ERROR,"Failed to open pipe");
+		return false;
+	}
+
+	pid_t pid = fork();
+
+	if (pid < 0) {
+		perror("fork");
+		return false;
+	} else if (pid == 0) {
+		close(p1[1]);
+		close(p2[0]);
+
+		dup2(p1[0], STDIN_FILENO);
+		dup2(p2[1], STDOUT_FILENO);
+		close(p1[0]);
+		close(p2[1]);
+
+		int err;
+		err = execvp(argv[0], argv);
+		if (err == -1) {
+			perror("execvp");
+			logprint(WARN,"Failed to execute %s",argv[0]);
+			return false;
+		}
+		exit(127);
+	}
+	close(p1[0]);
+	close(p2[1]);
+
+	if (write(p1[1],buffer,buffer_maxlength*sizeof(char)) == -1) {
+		return false;
+	}
+	close(p1[1]);
+	if (read(p2[0],name,name_maxlength*sizeof(char)) == -1) {
+		return false;
+	}
+
+	buffer[name_maxlength -1] = '\0';
+	char *p = strchr(name, '\n');
+	if (p != NULL) {
+		*p = '\0';
+	}
+	close(p2[0]);
+	return true;
+}
+
+struct xdpw_wlr_output *wlr_output_chooser_dmenu(struct wl_list *output_list) {
+
+	logprint(DEBUG, "wlroots: output chooser dmenu called");
+	struct xdpw_wlr_output *output, *tmp;
+	int N = wl_list_length(output_list);
+	char *output_name[N];
+	unsigned long maxlength = 0;
+	unsigned long namelength = 0;
+	int i = 0;
+
+	logprint(TRACE, "wlroots: create outputlist %d", N);
+
+	wl_list_for_each_safe(output, tmp, output_list, link) {
+		output_name[i] = strdup(output->name);
+		maxlength += strlen(output->name)+1;
+		namelength = (namelength > strlen(output->name)) ? namelength : strlen(output->name);
+		i++;
+	}
+	namelength++;
+
+	char buffer[maxlength];
+	buffer[0] = '\0';
+	char name[namelength];
+	for (int i=0; i<N; i++) {
+		strcat(buffer, output_name[i]);
+		strcat(buffer, "\n");
+		free(output_name[i]);
+	}
+	buffer[maxlength - 1] = '\0';
+
+	char *argv_wofi[] = {
+		"wofi",
+		"-d",
+		"-n",
+		NULL,
+	};
+
+	char *argv_bemenu[] = {
+		"bemenu",
+		NULL,
+	};
+
+	void *argvs[] = {
+		argv_wofi,
+		argv_bemenu,
+		NULL
+	};
+
+	i = 0;
+	while (argvs[i] != NULL) {
+		if (exec_chooser_dmenu(argvs[i], buffer, maxlength, name, namelength)) {
+			wl_list_for_each_safe(output, tmp, output_list, link) {
+				if (strcmp(output->name, name) == 0) {
+					return output;
+				}
+			}
+		}
+		i++;
+	}
+	return NULL;
+}
+
 struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct wl_list *output_list) {
 
 	logprint(DEBUG, "wlroots: output chooser called");
 	struct xdpw_wlr_output* (*chooser_functions[])(struct wl_list*) = {
+		wlr_output_chooser_dmenu,
 		xdpw_wlr_output_first
 	};
 	int N = sizeof(chooser_functions)/sizeof(chooser_functions[0]);
