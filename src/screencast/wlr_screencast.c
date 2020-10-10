@@ -314,6 +314,92 @@ struct xdpw_wlr_output *xdpw_wlr_output_first(struct wl_list *output_list) {
 	return NULL;
 }
 
+static bool exec_chooser_simple(char *const argv[], char *name, unsigned long name_maxlength) {
+	int p1[2]; //p -> c
+	int p2[2]; //c -> p
+
+	if (pipe(p1) == -1) {
+		logprint(ERROR,"Failed to open pipe");
+		return false;
+	}
+	if (pipe(p2) == -1) {
+		logprint(ERROR,"Failed to open pipe");
+		return false;
+	}
+
+	pid_t pid = fork();
+
+	if (pid < 0) {
+		perror("fork");
+		return false;
+	} else if (pid == 0) {
+		close(p1[1]);
+		close(p2[0]);
+
+		dup2(p1[0], STDIN_FILENO);
+		dup2(p2[1], STDOUT_FILENO);
+		close(p1[0]);
+		close(p2[1]);
+
+		int err;
+		err = execvp(argv[0], argv);
+
+		if (err == -1) {
+			perror("execvp");
+			logprint(WARN,"Failed to execute %s",argv[0]);
+			return false;
+		}
+		exit(127);
+	}
+
+	close(p1[0]);
+	close(p2[1]);
+	close(p1[1]);
+	if (read(p2[0],name,name_maxlength*sizeof(char)) == -1) {
+		return false;
+	}
+
+	name[name_maxlength -1] = '\0';
+	char *p = strchr(name, '\n');
+	if (p != NULL) {
+		*p = '\0';
+	}
+	close(p2[0]);
+	return true;
+}
+
+struct xdpw_wlr_output *wlr_output_chooser_simple(struct wl_list *output_list) {
+
+	logprint(DEBUG, "wlroots: output chooser simple called");
+	struct xdpw_wlr_output *output, *tmp;
+	unsigned long namelength = 0;
+	int i = 0;
+
+	wl_list_for_each_safe(output, tmp, output_list, link) {
+		namelength = (namelength > strlen(output->name)) ? namelength : strlen(output->name);
+		i++;
+	}
+	namelength++;
+
+	char name[namelength];
+	char *const argv[] = {
+		"slurp",
+		"-f",
+		"%o",
+		"-o",
+		NULL,
+	};
+
+	if (exec_chooser_simple(argv, name, namelength)) {
+		wl_list_for_each_safe(output, tmp, output_list, link) {
+			if (strcmp(output->name, name) == 0) {
+				return output;
+			}
+		}
+	}
+	return NULL;
+}
+
 static bool exec_chooser_dmenu(char *const argv[], char *buffer, unsigned long buffer_maxlength, char *name, unsigned long name_maxlength) {
 	int p1[2]; //p -> c
 	int p2[2]; //c -> p
@@ -436,6 +522,7 @@ struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct wl_list *output_list) {
 
 	logprint(DEBUG, "wlroots: output chooser called");
 	struct xdpw_wlr_output* (*chooser_functions[])(struct wl_list*) = {
+		wlr_output_chooser_simple,
 		wlr_output_chooser_dmenu,
 		xdpw_wlr_output_first
 	};
