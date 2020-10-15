@@ -314,7 +314,7 @@ struct xdpw_wlr_output *xdpw_wlr_output_first(struct wl_list *output_list) {
 	return NULL;
 }
 
-static bool exec_chooser_simple(char *const argv[], char *name, unsigned long name_maxlength) {
+static bool exec_chooser_simple(char *cmd, char *name, unsigned long name_maxlength) {
 	int p1[2]; //p -> c
 	int p2[2]; //c -> p
 
@@ -342,11 +342,11 @@ static bool exec_chooser_simple(char *const argv[], char *name, unsigned long na
 		close(p2[1]);
 
 		int err;
-		err = execvp(argv[0], argv);
+		err = execl("/bin/sh", "/bin/sh", "-c", cmd, (void *)NULL);
 
 		if (err == -1) {
-			perror("execvp");
-			logprint(WARN,"Failed to execute %s",argv[0]);
+			perror("execl");
+			logprint(WARN,"Failed to execute %s",cmd);
 			return false;
 		}
 		exit(127);
@@ -382,20 +382,21 @@ struct xdpw_wlr_output *wlr_output_chooser_simple(struct wl_list *output_list) {
 	namelength++;
 
 	char name[namelength];
-	char *const argv[] = {
-		"slurp",
-		"-f",
-		"%o",
-		"-o",
-		NULL,
+	char *cmds[] = {
+		"slurp -f %o -o",
+		NULL
 	};
 
-	if (exec_chooser_simple(argv, name, namelength)) {
-		wl_list_for_each_safe(output, tmp, output_list, link) {
-			if (strcmp(output->name, name) == 0) {
-				return output;
+	i = 0;
+	while (cmds[i] != NULL) {
+		if (exec_chooser_simple(cmds[i], name, namelength)) {
+			wl_list_for_each_safe(output, tmp, output_list, link) {
+				if (strcmp(output->name, name) == 0) {
+					return output;
+				}
 			}
 		}
+		i++;
 	}
 	return NULL;
 }
