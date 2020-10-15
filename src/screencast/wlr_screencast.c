@@ -368,7 +368,7 @@ static bool exec_chooser_simple(char *cmd, char *name, unsigned long name_maxlen
 	return true;
 }
 
-struct xdpw_wlr_output *wlr_output_chooser_simple(struct wl_list *output_list) {
+struct xdpw_wlr_output *wlr_output_chooser_simple(char *cmd, struct wl_list *output_list) {
 
 	logprint(DEBUG, "wlroots: output chooser simple called");
 	struct xdpw_wlr_output *output, *tmp;
@@ -382,21 +382,13 @@ struct xdpw_wlr_output *wlr_output_chooser_simple(struct wl_list *output_list) {
 	namelength++;
 
 	char name[namelength];
-	char *cmds[] = {
-		"slurp -f %o -o",
-		NULL
-	};
 
-	i = 0;
-	while (cmds[i] != NULL) {
-		if (exec_chooser_simple(cmds[i], name, namelength)) {
-			wl_list_for_each_safe(output, tmp, output_list, link) {
-				if (strcmp(output->name, name) == 0) {
-					return output;
-				}
+	if (exec_chooser_simple(cmd, name, namelength)) {
+		wl_list_for_each_safe(output, tmp, output_list, link) {
+			if (strcmp(output->name, name) == 0) {
+				return output;
 			}
 		}
-		i++;
 	}
 	return NULL;
 }
@@ -457,7 +449,7 @@ static bool exec_chooser_dmenu(char *cmd, char *buffer, unsigned long buffer_max
 	return true;
 }
 
-struct xdpw_wlr_output *wlr_output_chooser_dmenu(struct wl_list *output_list) {
+struct xdpw_wlr_output *wlr_output_chooser_dmenu(char *cmd, struct wl_list *output_list) {
 
 	logprint(DEBUG, "wlroots: output chooser dmenu called");
 	struct xdpw_wlr_output *output, *tmp;
@@ -487,22 +479,12 @@ struct xdpw_wlr_output *wlr_output_chooser_dmenu(struct wl_list *output_list) {
 	}
 	buffer[maxlength - 1] = '\0';
 
-	char *cmds[] = {
-		"wofi -d -n",
-		"bemenu",
-		NULL
-	};
-
-	i = 0;
-	while (cmds[i] != NULL) {
-		if (exec_chooser_dmenu(cmds[i], buffer, maxlength, name, namelength)) {
-			wl_list_for_each_safe(output, tmp, output_list, link) {
-				if (strcmp(output->name, name) == 0) {
-					return output;
-				}
+	if (exec_chooser_dmenu(cmd, buffer, maxlength, name, namelength)) {
+		wl_list_for_each_safe(output, tmp, output_list, link) {
+			if (strcmp(output->name, name) == 0) {
+				return output;
 			}
 		}
-		i++;
 	}
 	return NULL;
 }
@@ -510,20 +492,30 @@ struct xdpw_wlr_output *wlr_output_chooser_dmenu(struct wl_list *output_list) {
 struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct wl_list *output_list) {
 
 	logprint(DEBUG, "wlroots: output chooser called");
-	struct xdpw_wlr_output* (*chooser_functions[])(struct wl_list*) = {
-		wlr_output_chooser_simple,
-		wlr_output_chooser_dmenu,
-		xdpw_wlr_output_first
+	struct xdpw_output_chooser default_chooser[] = {
+		{XDPW_CHOOSER_SIMPLE, "slurp -f %o -o"},
+		{XDPW_CHOOSER_DMENU, "wofi -d -n"},
+		{XDPW_CHOOSER_DMENU, "bemenu"},
 	};
-	int N = sizeof(chooser_functions)/sizeof(chooser_functions[0]);
+
+	int N = sizeof(default_chooser)/sizeof(default_chooser[0]);
 	struct xdpw_wlr_output *output;
 	for (int i = 0; i<N; i++) {
-		output = chooser_functions[i](output_list);
+		switch (default_chooser[i].type) {
+		case XDPW_CHOOSER_SIMPLE:
+			output = wlr_output_chooser_simple(default_chooser[i].cmd, output_list);
+			break;
+		case XDPW_CHOOSER_DMENU:
+			output = wlr_output_chooser_dmenu(default_chooser[i].cmd, output_list);
+			break;
+		default:
+			output = NULL;
+		}
 		if (output != NULL) {
 			return output;
 		}
 	}
-	return output;
+	return xdpw_wlr_output_first(output_list);
 }
 
 struct xdpw_wlr_output *xdpw_wlr_output_find_by_name(struct wl_list *output_list,

@@ -20,6 +20,17 @@ enum source_types {
   WINDOW = 2,
 };
 
+enum xdpw_chooser_types {
+  XDPW_CHOOSER_NONE,
+  XDPW_CHOOSER_SIMPLE,
+  XDPW_CHOOSER_DMENU,
+};
+
+struct xdpw_output_chooser {
+	enum xdpw_chooser_types type;
+	char *cmd;
+};
+
 struct xdpw_frame_damage {
 	uint32_t x;
 	uint32_t y;
