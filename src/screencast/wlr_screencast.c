@@ -384,6 +384,7 @@ struct xdpw_wlr_output *wlr_output_chooser_simple(char *cmd, struct wl_list *out
 	char name[namelength];
 
 	if (exec_chooser_simple(cmd, name, namelength)) {
+		logprint(DEBUG, "wlroots: output chooser %s selects output %s", cmd, name);
 		wl_list_for_each_safe(output, tmp, output_list, link) {
 			if (strcmp(output->name, name) == 0) {
 				return output;
@@ -480,6 +481,7 @@ struct xdpw_wlr_output *wlr_output_chooser_dmenu(char *cmd, struct wl_list *outp
 	buffer[maxlength - 1] = '\0';
 
 	if (exec_chooser_dmenu(cmd, buffer, maxlength, name, namelength)) {
+		logprint(DEBUG, "wlroots: output chooser %s selects output %s", cmd, name);
 		wl_list_for_each_safe(output, tmp, output_list, link) {
 			if (strcmp(output->name, name) == 0) {
 				return output;
