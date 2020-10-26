@@ -382,6 +382,7 @@ struct xdpw_wlr_output *wlr_output_chooser_simple(char *cmd, struct wl_list *out
 	namelength++;
 
 	char name[namelength];
+	memset(name, 0, namelength);
 
 	if (exec_chooser_simple(cmd, name, namelength)) {
 		logprint(TRACE, "wlroots: output chooser %s selects output %s", cmd, name);
@@ -473,6 +474,7 @@ struct xdpw_wlr_output *wlr_output_chooser_dmenu(char *cmd, struct wl_list *outp
 	char buffer[maxlength];
 	buffer[0] = '\0';
 	char name[namelength];
+	memset(name, 0, namelength);
 	for (int i=0; i<N; i++) {
 		strcat(buffer, output_name[i]);
 		strcat(buffer, "\n");
