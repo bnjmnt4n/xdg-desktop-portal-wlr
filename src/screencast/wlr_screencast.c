@@ -314,19 +314,8 @@ struct xdpw_wlr_output *xdpw_wlr_output_first(struct wl_list *output_list) {
 	return NULL;
 }
 
-static bool exec_chooser(char *cmd, FILE *input, char **name, size_t *name_maxlength) {
-	int p1[2]; //p -> c
-	int p2[2]; //c -> p
-
-	if (pipe(p1) == -1) {
-		logprint(ERROR, "Failed to open pipe");
-		return false;
-	}
-	if (pipe(p2) == -1) {
-		logprint(ERROR, "Failed to open pipe");
-		return false;
-	}
-
+static bool exec_chooser(char *cmd, bool readin, int p1[2], int p2[2]) {
+	logprint(TRACE, "exec chooser called: cmd %s, readin %d, pipe1 (%d,%d), pipe2 (%d,%d)", cmd, readin, p1[0], p1[1], p2[0], p2[1]);
 	pid_t pid = fork();
 
 	if (pid < 0) {
@@ -336,7 +325,9 @@ static bool exec_chooser(char *cmd, FILE *input, char **name, size_t *name_maxle
 		close(p1[1]);
 		close(p2[0]);
 
-		dup2(p1[0], STDIN_FILENO);
+		if (readin) {
+			dup2(p1[0], STDIN_FILENO);
+		}
 		dup2(p2[1], STDOUT_FILENO);
 		close(p1[0]);
 		close(p2[1]);
@@ -354,62 +345,67 @@ static bool exec_chooser(char *cmd, FILE *input, char **name, size_t *name_maxle
 
 	close(p1[0]);
 	close(p2[1]);
-	if (input != NULL) {
-		char *line_buffer = NULL;
-		size_t buffer_size = 0;
-
-		ssize_t line_size = getline(&line_buffer, &buffer_size, input);
-		while (line_size > 0) {
-			if (write(p1[1], line_buffer, line_size*sizeof(char)) == -1) {
-				perror("write to pipe failed");
-				return false;
-			}
-			line_size = getline(&line_buffer, &buffer_size, input);
-		}
-		free(line_buffer);
-		fclose(input);
-	}
 	close(p1[1]);
-	FILE *f = fdopen(p2[0], "r");
-	wait(NULL);
-	ssize_t nread = getline(name, name_maxlength, f);
-	if (nread < 0) {
-		perror("getline failed");
-		return false;
-	}
-	fclose(f);
-	close(p2[0]);
 
-	// Strip newline
-	char *p = strchr(*name, '\n');
-	if (p != NULL) {
-		*p = '\0';
-	}
+	wait(NULL);
 
 	return true;
 }
 
-struct xdpw_wlr_output *wlr_output_chooser_universal(struct xdpw_output_chooser *chooser, struct wl_list *output_list) {
-	logprint(DEBUG, "wlroots: output chooser universal called");
+struct xdpw_wlr_output *wlr_output_chooser(struct xdpw_output_chooser *chooser, struct wl_list *output_list) {
+	logprint(DEBUG, "wlroots: output chooser called");
 	struct xdpw_wlr_output *output, *tmp;
 	size_t namelength = 0;
 	char *name = NULL;
-	FILE *input = NULL;
+	bool readin = false;
+	FILE *f = NULL;
+
+	int p1[2]; //p -> c
+	int p2[2]; //c -> p
+
+	if (pipe(p1) == -1) {
+		logprint(ERROR, "Failed to open pipe");
+		return false;
+	}
+	if (pipe(p2) == -1) {
+		logprint(ERROR, "Failed to open pipe");
+		return false;
+	}
 
 	if (chooser->type == XDPW_CHOOSER_DMENU) {
-		input = tmpfile();
-		if (input == 0) {
-			perror("tmpfile failed");
+		f = fdopen(p1[1], "w");
+		if (f == 0) {
+			perror("open pipe1 failed");
 			return NULL;
 		}
 		struct xdpw_wlr_output *output, *tmp;
 		wl_list_for_each_safe(output, tmp, output_list, link) {
-			fprintf(input, "%s\n", output->name);
+			fprintf(f, "%s\n", output->name);
 		}
-		rewind(input);
+		fclose(f);
+		readin = true;
 	}
 
-	if (exec_chooser(chooser->cmd, input, &name, &namelength)) {
+	if (exec_chooser(chooser->cmd, readin, p1, p2)) {
+		f = fdopen(p2[0], "r");
+		if (f == 0) {
+			perror("open pipe2 failed");
+			return NULL;
+		}
+		ssize_t nread = getline(&name, &namelength, f);
+		if (nread < 0) {
+			perror("getline failed");
+			return false;
+		}
+		fclose(f);
+		close(p2[0]);
+
+		//Strip newline
+		char *p = strchr(name, '\n');
+		if (p != NULL) {
+			*p = '\0';
+		}
+
 		logprint(TRACE, "wlroots: output chooser %s selects output %s", chooser->cmd, name);
 		wl_list_for_each_safe(output, tmp, output_list, link) {
 			if (strcmp(output->name, name) == 0) {
@@ -423,7 +419,6 @@ struct xdpw_wlr_output *wlr_output_chooser_universal(struct xdpw_output_chooser 
 }
 
 struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct wl_list *output_list) {
-
 	logprint(DEBUG, "wlroots: output chooser called");
 	struct xdpw_output_chooser default_chooser[] = {
 		{XDPW_CHOOSER_SIMPLE, "slurp -f %o -o"},
@@ -434,14 +429,7 @@ struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct wl_list *output_list) {
 	int N = sizeof(default_chooser)/sizeof(default_chooser[0]);
 	struct xdpw_wlr_output *output;
 	for (int i = 0; i<N; i++) {
-		switch (default_chooser[i].type) {
-		case XDPW_CHOOSER_SIMPLE:
-		case XDPW_CHOOSER_DMENU:
-			output = wlr_output_chooser_universal(&default_chooser[i], output_list);
-			break;
-		default:
-			output = NULL;
-		}
+		output = wlr_output_chooser(&default_chooser[i], output_list);
 		if (output != NULL) {
 			logprint(DEBUG, "wlroots: output chooser selects %s", output->name);
 			return output;
