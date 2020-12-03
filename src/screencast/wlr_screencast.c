@@ -365,11 +365,11 @@ struct xdpw_wlr_output *wlr_output_chooser(struct xdpw_output_chooser *chooser, 
 
 	if (pipe(p1) == -1) {
 		logprint(ERROR, "Failed to open pipe");
-		return false;
+		return NULL;
 	}
 	if (pipe(p2) == -1) {
 		logprint(ERROR, "Failed to open pipe");
-		return false;
+		return NULL;
 	}
 
 	if (chooser->type == XDPW_CHOOSER_DMENU) {
@@ -395,7 +395,7 @@ struct xdpw_wlr_output *wlr_output_chooser(struct xdpw_output_chooser *chooser, 
 		ssize_t nread = getline(&name, &namelength, f);
 		if (nread < 0) {
 			perror("getline failed");
-			return false;
+			return NULL;
 		}
 		fclose(f);
 		close(p2[0]);
