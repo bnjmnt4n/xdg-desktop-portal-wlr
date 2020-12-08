@@ -397,6 +397,7 @@ struct xdpw_wlr_output *wlr_output_chooser(struct xdpw_output_chooser *chooser, 
 		ssize_t nread = getline(&name, &namelength, f);
 		if (nread < 0) {
 			perror("getline failed");
+			fclose(f);
 			return NULL;
 		}
 		fclose(f);
