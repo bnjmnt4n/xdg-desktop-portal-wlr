@@ -362,18 +362,27 @@ struct xdpw_wlr_output *wlr_output_chooser(struct xdpw_output_chooser *chooser, 
 	int p2[2]; //c -> p
 
 	if (pipe(p1) == -1) {
-		logprint(ERROR, "Failed to open pipe");
+		perror("pipe1");
+		logprint(ERROR, "Failed to open pipe1");
 		return NULL;
 	}
 	if (pipe(p2) == -1) {
-		logprint(ERROR, "Failed to open pipe");
+		perror("pipe2");
+		logprint(ERROR, "Failed to open pipe2");
+		close(p1[0]);
+		close(p1[1]);
 		return NULL;
 	}
 
 	if (chooser->type == XDPW_CHOOSER_DMENU) {
 		f = fdopen(p1[1], "w");
 		if (f == 0) {
-			perror("open pipe1 failed");
+			perror("fdopen pipe1");
+			logprint(ERROR, "Failed to open pipe1 for writing");
+			close(p1[0]);
+			close(p1[1]);
+			close(p2[0]);
+			close(p2[1]);
 			return NULL;
 		}
 		struct xdpw_wlr_output *output, *tmp;
@@ -391,7 +400,9 @@ struct xdpw_wlr_output *wlr_output_chooser(struct xdpw_output_chooser *chooser, 
 	if (exec_chooser(chooser->cmd, readin, p1, p2)) {
 		f = fdopen(p2[0], "r");
 		if (f == 0) {
-			perror("open pipe2 failed");
+			perror("fdopen pipe2");
+			logprint(ERROR, "Failed to open pipe2 for reading");
+			close(p2[0]);
 			return NULL;
 		}
 		ssize_t nread = getline(&name, &namelength, f);
