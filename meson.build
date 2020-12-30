@@ -26,6 +26,7 @@ rt = cc.find_library('rt')
 pipewire = dependency('libpipewire-0.3', version: '>= 0.3.2')
 wayland_client = dependency('wayland-client')
 wayland_protos = dependency('wayland-protocols', version: '>=1.14')
+iniparser = cc.find_library('iniparser')
 
 logind = dependency('libsystemd', required: false)
 if logind.found()
@@ -42,6 +43,7 @@ executable(
 	files([
 		'src/core/main.c',
 		'src/core/logger.c',
+		'src/core/config.c',
 		'src/core/request.c',
 		'src/core/session.c',
 		'src/screenshot/screenshot.c',
@@ -56,6 +58,7 @@ executable(
 		logind,
 		pipewire,
 		rt,
+		iniparser,
 	],
 	include_directories: [inc],
 	install: true,

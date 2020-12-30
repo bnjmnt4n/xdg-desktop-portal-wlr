@@ -1,0 +1,6 @@
+[logger]
+level=ERROR
+logfile=stderr
+
+[screencast]
+output=
