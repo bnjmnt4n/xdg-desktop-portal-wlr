@@ -3,3 +3,5 @@ level=ERROR
 
 [screencast]
 output=
+chooser_cmd="slurp -f %o -o"
+chooser_type=simple
