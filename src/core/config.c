@@ -56,6 +56,7 @@ static bool file_exists(const char *path) {
 }
 
 static char *expand_path(char *path, bool realloc) {
+	if (path != NULL) {
 		wordexp_t p;
 		if (wordexp(path, &p, WRDE_UNDEF) == 0) {
 			if (realloc) {
@@ -63,11 +64,11 @@ static char *expand_path(char *path, bool realloc) {
 			}
 			return strdup(p.we_wordv[0]);
 		}
-
 		if (realloc) {
 			free(path);
 		}
-		return NULL;
+	}
+	return NULL;
 }
 
 void config_parse_file(struct xdpw_config *config) {
@@ -98,11 +99,13 @@ static char *get_config_path(void) {
 		config_paths[1] = "$HOME/.config/xdg-desktop-portal-wlr/config";
 	}
 
+	char *path;
 	for (size_t i = 0; i < sizeof(config_paths) / sizeof(char *); ++i) {
-		char *path = expand_path((char*)config_paths[i], false);
+		path = expand_path((char*)config_paths[i], false);
 		if (file_exists(path)) {
 			return path;
 		}
+		free(path);
 	}
 
 	return NULL;
