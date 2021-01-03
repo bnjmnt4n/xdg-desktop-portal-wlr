@@ -13,10 +13,19 @@
 
 #define SYSCONFDIR "/etc"
 
+static const char *loglevels[] = {
+	"QUIET",
+	"ERROR",
+	"WARN",
+	"INFO",
+	"DEBUG",
+	"TRACE"
+};
+
 void print_config(struct xdpw_config *config) {
 	printf("Configfile: %s\n",config->conf.configfile);
 	printf("Logfile: %s\n",config->logger_conf.logfile);
-	printf("Loglevel: %s\n",config->logger_conf.loglevel);
+	printf("Loglevel: %d\n",config->logger_conf.loglevel);
 	printf("Output_Name: %s\n",config->screencast_conf.output_name);
 }
 
@@ -29,7 +38,6 @@ void free_configstring(char **dest) {
 
 void destroy_config(struct xdpw_config *config) {
 	// logger
-	free_configstring(&config->logger_conf.loglevel);
 	free_configstring(&config->logger_conf.logfile);
 
 	// screencast
@@ -49,6 +57,19 @@ void getstring_from_conffile(dictionary *d, char *key, char **dest, char *def) {
 			}
 		}
 	}
+}
+
+void getenum_from_conffile(dictionary *d, char *key, int *dest, const char *array[] , int num_array, int def) {
+	const char *c = iniparser_getstring(d, key, NULL);
+	if (c != NULL) {
+		for (int i = 0; i < num_array; i++) {
+			if (strcmp(c, array[i]) == 0) {
+				*dest = i;
+				return;
+			}
+		}
+	}
+	*dest = def;
 }
 
 static bool file_exists(const char *path) {
@@ -75,7 +96,7 @@ void config_parse_file(struct xdpw_config *config) {
 	dictionary *d = iniparser_load(config->conf.configfile);
 
 	// logger
-	getstring_from_conffile(d, "logger:loglevel", &config->logger_conf.loglevel, "ERROR");
+	getenum_from_conffile(d, "logger:loglevel", (int*)&config->logger_conf.loglevel, loglevels, 6, ERROR);
 	getstring_from_conffile(d, "logger:logfile", &config->logger_conf.logfile, "stderr");
 	config->logger_conf.logfile = expand_path(config->logger_conf.logfile, true);
 

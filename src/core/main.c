@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
 		switch (c) {
 		case 'l':
-			config.logger_conf.loglevel = strdup(optarg);
+			config.logger_conf.loglevel = get_loglevel(optarg);
 			break;
 		case 'o':
 			config.screencast_conf.output_name = optarg;
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
 	print_config(&config);
 
 	init_logger(open_logger_file(config.logger_conf.logfile),
-			get_loglevel(config.logger_conf.loglevel));
+			config.logger_conf.loglevel);
 
 	int ret = 0;
 

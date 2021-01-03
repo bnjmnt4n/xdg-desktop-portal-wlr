@@ -8,7 +8,7 @@ struct config_general {
 };
 
 struct config_logger {
-	char *loglevel;
+	enum LOGLEVEL loglevel;
 	char *logfile;
 };
 
