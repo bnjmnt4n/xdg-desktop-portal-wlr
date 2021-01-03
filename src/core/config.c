@@ -12,10 +12,18 @@
 #include <wordexp.h>
 #include "iniparser.h"
 
+static const char *choosertypes[] = {
+	"none",
+	"simple",
+	"dmenu"
+};
+
 void print_config(enum LOGLEVEL loglevel, struct xdpw_config *config) {
 	logprint(loglevel, "config: Configfile %s",config->conf.configfile);
 	logprint(loglevel, "config: Loglevel %d",config->logger_conf.loglevel);
 	logprint(loglevel, "config: Outputname  %s",config->screencast_conf.output_name);
+	logprint(loglevel, "Chooser_Cmd: %s\n",config->screencast_conf.chooser_cmd);
+	logprint(loglevel, "Chooser_Type: %d\n",config->screencast_conf.chooser_type);
 }
 
 // NOTE: calling destroy_config won't prepare the config to be read again from config file
@@ -98,6 +106,8 @@ void config_parse_file(struct xdpw_config *config) {
 
 	// screencast
 	getstring_from_conffile(d, "screencast:output_name", &config->screencast_conf.output_name, NULL);
+	getstring_from_conffile(d, "screencast:chooser_cmd", &config->screencast_conf.chooser_cmd, NULL);
+	getenum_from_conffile(d, "screencast:chooser_type", (int*)&config->screencast_conf.chooser_type, choosertypes, 3, XDPW_CHOOSER_NONE);
 
 	iniparser_freedict(d);
 }
