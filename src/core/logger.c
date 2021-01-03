@@ -19,7 +19,11 @@ static const char *loglevels[] = {
 static struct logger_properties logprops;
 
 FILE* open_logger_file(char *file_name) {
-	if (strcmp(file_name, "stderr") == 0 || file_name == NULL) {
+	if (file_name == NULL) {
+		printf("Use stderr\n");
+		return stderr;
+	} else if (strcmp(file_name, "stderr") == 0) {
+		printf("Use stderr\n");
 		return stderr;
 	} else {
 		return fopen(file_name, "w");
