@@ -40,7 +40,13 @@ void getstring_from_conffile(dictionary *d, char *key, char **dest, char *def) {
 	if (*dest == NULL) {
 		const char *c = iniparser_getstring(d, key, def);
 		if (c != NULL) {
-			*dest = strdup(c);
+			// Allow keys without value as default
+			if (strcmp(c, "") != 0) {
+				printf("Config: Key %s, Value %s\n", key, c);
+				*dest = strdup(c);
+			} else {
+				*dest = strdup(def);
+			}
 		}
 	}
 }
