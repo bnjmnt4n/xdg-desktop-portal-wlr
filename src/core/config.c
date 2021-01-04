@@ -37,6 +37,7 @@ void free_configstring(char **dest) {
 }
 
 void destroy_config(struct xdpw_config *config) {
+	free_configstring(&config->conf.configfile);
 
 	// screencast
 	free_configstring(&config->screencast_conf.output_name);
