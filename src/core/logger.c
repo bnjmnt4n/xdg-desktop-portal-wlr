@@ -5,9 +5,10 @@
 #include <string.h>
 #include <time.h>
 
-static int NUM_LEVELS = 6;
+static int NUM_LEVELS = 7;
 
 static const char *loglevels[] = {
+	"UNSET",
 	"QUIET",
 	"ERROR",
 	"WARN",

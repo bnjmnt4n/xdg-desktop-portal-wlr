@@ -21,7 +21,7 @@ struct xdpw_config {
 	struct config_screencast screencast_conf;
 };
 
-void print_config(struct xdpw_config *config);
+void print_config(enum LOGLEVEL loglevel, struct xdpw_config *config);
 void destroy_config(struct xdpw_config *config);
 void init_config(struct xdpw_config *config);
 

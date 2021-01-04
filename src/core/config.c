@@ -14,6 +14,7 @@
 #define SYSCONFDIR "/etc"
 
 static const char *loglevels[] = {
+	"UNSET",
 	"QUIET",
 	"ERROR",
 	"WARN",
@@ -22,10 +23,10 @@ static const char *loglevels[] = {
 	"TRACE"
 };
 
-void print_config(struct xdpw_config *config) {
-	printf("Configfile: %s\n",config->conf.configfile);
-	printf("Loglevel: %d\n",config->logger_conf.loglevel);
-	printf("Output_Name: %s\n",config->screencast_conf.output_name);
+void print_config(enum LOGLEVEL loglevel, struct xdpw_config *config) {
+	logprint(loglevel, "config: Configfile %s",config->conf.configfile);
+	logprint(loglevel, "config: Loglevel %d",config->logger_conf.loglevel);
+	logprint(loglevel, "config: Outputname  %s",config->screencast_conf.output_name);
 }
 
 void free_configstring(char **dest) {
@@ -47,7 +48,6 @@ void getstring_from_conffile(dictionary *d, char *key, char **dest, char *def) {
 		if (c != NULL) {
 			// Allow keys without value as default
 			if (strcmp(c, "") != 0) {
-				printf("Config: Key %s, Value %s\n", key, c);
 				*dest = strdup(c);
 			} else {
 				*dest = strdup(def);
@@ -57,16 +57,18 @@ void getstring_from_conffile(dictionary *d, char *key, char **dest, char *def) {
 }
 
 void getenum_from_conffile(dictionary *d, char *key, int *dest, const char *array[] , int num_array, int def) {
-	const char *c = iniparser_getstring(d, key, NULL);
-	if (c != NULL) {
-		for (int i = 0; i < num_array; i++) {
-			if (strcmp(c, array[i]) == 0) {
-				*dest = i;
-				return;
+	if (*dest == 0) {
+		const char *c = iniparser_getstring(d, key, NULL);
+		if (c != NULL) {
+			for (int i = 0; i < num_array; i++) {
+				if (strcmp(c, array[i]) == 0) {
+					*dest = i;
+					return;
+				}
 			}
 		}
+		*dest = def;
 	}
-	*dest = def;
 }
 
 static bool file_exists(const char *path) {
@@ -93,7 +95,7 @@ void config_parse_file(struct xdpw_config *config) {
 	dictionary *d = iniparser_load(config->conf.configfile);
 
 	// logger
-	getenum_from_conffile(d, "logger:loglevel", (int*)&config->logger_conf.loglevel, loglevels, 6, ERROR);
+	getenum_from_conffile(d, "logger:loglevel", (int*)&config->logger_conf.loglevel, loglevels, 7, ERROR);
 
 	// screencast
 	getstring_from_conffile(d, "screencast:output_name", &config->screencast_conf.output_name, NULL);

@@ -35,6 +35,7 @@ static int xdpw_usage(FILE* stream, int rc) {
 
 int main(int argc, char *argv[]) {
 	struct xdpw_config config = {0};
+	init_logger(stderr, UNSET);
 
 	static const char* shortopts = "l:o:c:h";
 	static const struct option longopts[] = {
@@ -70,7 +71,7 @@ int main(int argc, char *argv[]) {
 	init_config(&config);
 	init_logger(stderr, config.logger_conf.loglevel);
 
-	print_config(&config);
+	print_config(INFO, &config);
 
 	int ret = 0;
 

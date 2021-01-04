@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-enum LOGLEVEL { QUIET, ERROR, WARN, INFO, DEBUG, TRACE };
+enum LOGLEVEL { UNSET, QUIET, ERROR, WARN, INFO, DEBUG, TRACE };
 
 struct logger_properties {
 	enum LOGLEVEL level;
