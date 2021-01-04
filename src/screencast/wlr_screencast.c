@@ -457,22 +457,33 @@ struct xdpw_wlr_output *wlr_output_chooser_default(struct wl_list *output_list) 
 
 struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct xdpw_screencast_context *ctx) {
 	if (ctx->state->config->screencast_conf.chooser_type == XDPW_CHOOSER_NONE) {
-		return wlr_output_chooser_default(&ctx->output_list);
-	} else {
-		struct xdpw_wlr_output *output;
-		struct xdpw_output_chooser chooser = {
-			ctx->state->config->screencast_conf.chooser_type,
-			ctx->state->config->screencast_conf.chooser_cmd
-		};
-		logprint(DEBUG, "wlroots: output chooser %s (%d)", chooser.cmd, chooser.type);
-		output = wlr_output_chooser(&chooser, &ctx->output_list);
+		struct xdpw_wlr_output *output = NULL;
+		if (ctx->state->config->screencast_conf.output_name != NULL) {
+			output = xdpw_wlr_output_find_by_name(&ctx->output_list, ctx->state->config->screencast_conf.output_name);
+		}
 		if (output != NULL) {
-			logprint(DEBUG, "wlroots: output chooser selects %s", output->name);
 			return output;
 		}
 		return xdpw_wlr_output_first(&ctx->output_list);
+	} else {
+		struct xdpw_wlr_output *output;
+		if (ctx->state->config->screencast_conf.chooser_cmd != NULL) {
+			struct xdpw_output_chooser chooser = {
+				ctx->state->config->screencast_conf.chooser_type,
+				ctx->state->config->screencast_conf.chooser_cmd
+			};
+			logprint(DEBUG, "wlroots: output chooser %s (%d)", chooser.cmd, chooser.type);
+			output = wlr_output_chooser(&chooser, &ctx->output_list);
+			if (output != NULL) {
+				logprint(DEBUG, "wlroots: output chooser selects %s", output->name);
+				return output;
+			}
+			return xdpw_wlr_output_first(&ctx->output_list);
+		}
+		return wlr_output_chooser_default(&ctx->output_list);
 	}
 }
+
 struct xdpw_wlr_output *xdpw_wlr_output_find_by_name(struct wl_list *output_list,
 		const char* name) {
 	struct xdpw_wlr_output *output, *tmp;

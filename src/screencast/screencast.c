@@ -48,19 +48,10 @@ int setup_outputs(struct xdpw_screencast_context *ctx, struct xdpw_session *sess
 	}
 
 	struct xdpw_wlr_output *out;
-	if (ctx->state->config->screencast_conf.output_name) {
-		out = xdpw_wlr_output_find_by_name(&ctx->output_list,
-				ctx->state->config->screencast_conf.output_name);
-		if (!out) {
-			logprint(ERROR, "wlroots: no such output");
-			abort();
-		}
-	} else {
-		out = xdpw_wlr_output_chooser(ctx);
-		if (!out) {
-			logprint(ERROR, "wlroots: no output found");
-			abort();
-		}
+	out = xdpw_wlr_output_chooser(ctx);
+	if (!out) {
+		logprint(ERROR, "wlroots: no output found");
+		abort();
 	}
 
 	struct xdpw_screencast_instance *cast, *tmp_c;
