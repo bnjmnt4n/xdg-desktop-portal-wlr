@@ -24,7 +24,6 @@ static const char *loglevels[] = {
 
 void print_config(struct xdpw_config *config) {
 	printf("Configfile: %s\n",config->conf.configfile);
-	printf("Logfile: %s\n",config->logger_conf.logfile);
 	printf("Loglevel: %d\n",config->logger_conf.loglevel);
 	printf("Output_Name: %s\n",config->screencast_conf.output_name);
 }
@@ -37,8 +36,6 @@ void free_configstring(char **dest) {
 }
 
 void destroy_config(struct xdpw_config *config) {
-	// logger
-	free_configstring(&config->logger_conf.logfile);
 
 	// screencast
 	free_configstring(&config->screencast_conf.output_name);
@@ -97,8 +94,6 @@ void config_parse_file(struct xdpw_config *config) {
 
 	// logger
 	getenum_from_conffile(d, "logger:loglevel", (int*)&config->logger_conf.loglevel, loglevels, 6, ERROR);
-	getstring_from_conffile(d, "logger:logfile", &config->logger_conf.logfile, "stderr");
-	config->logger_conf.logfile = expand_path(config->logger_conf.logfile, true);
 
 	// screencast
 	getstring_from_conffile(d, "screencast:output_name", &config->screencast_conf.output_name, NULL);

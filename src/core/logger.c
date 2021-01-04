@@ -18,24 +18,6 @@ static const char *loglevels[] = {
 
 static struct logger_properties logprops;
 
-FILE* open_logger_file(char *file_name) {
-	if (file_name == NULL) {
-		printf("Use stderr\n");
-		return stderr;
-	} else if (strcmp(file_name, "stderr") == 0) {
-		printf("Use stderr\n");
-		return stderr;
-	} else {
-		return fopen(file_name, "w");
-	}
-}
-
-void destroy_logger() {
-	if (logprops.dst != stderr) {
-		fclose(logprops.dst);
-	}
-}
-
 void init_logger(FILE *dst, enum LOGLEVEL level) {
 	logprops.dst = dst;
 	logprops.level = level;

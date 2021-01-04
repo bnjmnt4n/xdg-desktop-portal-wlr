@@ -68,11 +68,9 @@ int main(int argc, char *argv[]) {
 	}
 
 	init_config(&config);
+	init_logger(stderr, config.logger_conf.loglevel);
 
 	print_config(&config);
-
-	init_logger(open_logger_file(config.logger_conf.logfile),
-			config.logger_conf.loglevel);
 
 	int ret = 0;
 
@@ -187,7 +185,6 @@ int main(int argc, char *argv[]) {
 	}
 
 	// TODO: cleanup
-	destroy_logger();
 	destroy_config(&config);
 
 	return EXIT_SUCCESS;

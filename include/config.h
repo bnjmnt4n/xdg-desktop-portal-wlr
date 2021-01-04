@@ -9,7 +9,6 @@ struct config_general {
 
 struct config_logger {
 	enum LOGLEVEL loglevel;
-	char *logfile;
 };
 
 struct config_screencast {
