@@ -35,32 +35,34 @@ void destroy_config(struct xdpw_config *config) {
 }
 
 void getstring_from_conffile(dictionary *d, char *key, char **dest, char *def) {
-	if (*dest == NULL) {
-		const char *c = iniparser_getstring(d, key, def);
-		if (c != NULL) {
-			// Allow keys without value as default
-			if (strcmp(c, "") != 0) {
-				*dest = strdup(c);
-			} else {
-				*dest = strdup(def);
-			}
+	if (*dest != NULL) {
+		return;
+	}
+	const char *c = iniparser_getstring(d, key, def);
+	if (c != NULL) {
+		// Allow keys without value as default
+		if (strcmp(c, "") != 0) {
+			*dest = strdup(c);
+		} else {
+			*dest = strdup(def);
 		}
 	}
 }
 
 void getenum_from_conffile(dictionary *d, char *key, int *dest, const char *array[] , int num_array, int def) {
-	if (*dest == 0) {
-		const char *c = iniparser_getstring(d, key, NULL);
-		if (c != NULL) {
-			for (int i = 0; i < num_array; i++) {
-				if (strcmp(c, array[i]) == 0) {
-					*dest = i;
-					return;
-				}
+	if (*dest != 0) {
+		return;
+	}
+	const char *c = iniparser_getstring(d, key, NULL);
+	if (c != NULL) {
+		for (int i = 0; i < num_array; i++) {
+			if (strcmp(c, array[i]) == 0) {
+				*dest = i;
+				return;
 			}
 		}
-		*dest = def;
 	}
+	*dest = def;
 }
 
 static bool file_exists(const char *path) {
