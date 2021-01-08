@@ -20,18 +20,13 @@ void print_config(enum LOGLEVEL loglevel, struct xdpw_config *config) {
 	logprint(loglevel, "config: Outputname  %s",config->screencast_conf.output_name);
 }
 
-void free_configstring(char **dest) {
-	if (*dest != NULL) {
-		free(*dest);
-		*dest = NULL;
-	}
-}
-
+// NOTE: calling destroy_config won't prepare the config to be read again from config file
+// with init_config since to pointers and other values won't be reset to NULL, or 0
 void destroy_config(struct xdpw_config *config) {
-	free_configstring(&config->conf.configfile);
+	free(&config->conf.configfile);
 
 	// screencast
-	free_configstring(&config->screencast_conf.output_name);
+	free(&config->screencast_conf.output_name);
 }
 
 void getstring_from_conffile(dictionary *d, char *key, char **dest, char *def) {
