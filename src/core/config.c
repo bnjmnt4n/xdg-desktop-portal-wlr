@@ -93,7 +93,7 @@ void config_parse_file(struct xdpw_config *config) {
 }
 
 static char *get_config_path(void) {
-	static const char *config_paths[] = {
+	static char *config_paths[] = {
 		"$XDG_CONFIG_HOME/xdg-desktop-portal-wlr/$XDG_CURRENT_DESKTOP",
 		"$XDG_CONFIG_HOME/xdg-desktop-portal-wlr/config",
 		SYSCONFDIR "/xdg/xdg-desktop-portal-wlr/$XDG_CURRENT_DESKTOP",
@@ -110,7 +110,7 @@ static char *get_config_path(void) {
 
 	char *path;
 	for (size_t i = 0; i < sizeof(config_paths) / sizeof(char *); ++i) {
-		path = expand_path((char*)config_paths[i], false);
+		path = expand_path(config_paths[i], false);
 		if (file_exists(path)) {
 			return path;
 		}
