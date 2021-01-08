@@ -99,6 +99,8 @@ static char *get_config_path(void) {
 	static const char *config_paths[] = {
 		"$XDG_CONFIG_HOME/xdg-desktop-portal-wlr/$XDG_CURRENT_DESKTOP",
 		"$XDG_CONFIG_HOME/xdg-desktop-portal-wlr/config",
+		SYSCONFDIR "/xdg/xdg-desktop-portal-wlr/$XDG_CURRENT_DESKTOP",
+		SYSCONFDIR "/xdg/xdg-desktop-portal-wlr/config",
 		SYSCONFDIR "/xdg-desktop-portal-wlr/$XDG_CURRENT_DESKTOP",
 		SYSCONFDIR "/xdg-desktop-portal-wlr/config",
 	};
