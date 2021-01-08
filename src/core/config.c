@@ -1,5 +1,6 @@
 #include "config.h"
 #include "xdpw.h"
+#include "logger.h"
 
 #include <dictionary.h>
 #include <stdarg.h>
@@ -12,16 +13,6 @@
 #include "iniparser.h"
 
 #define SYSCONFDIR "/etc"
-
-static const char *loglevels[] = {
-	"UNSET",
-	"QUIET",
-	"ERROR",
-	"WARN",
-	"INFO",
-	"DEBUG",
-	"TRACE"
-};
 
 void print_config(enum LOGLEVEL loglevel, struct xdpw_config *config) {
 	logprint(loglevel, "config: Configfile %s",config->conf.configfile);
@@ -96,7 +87,7 @@ void config_parse_file(struct xdpw_config *config) {
 	dictionary *d = iniparser_load(config->conf.configfile);
 
 	// logger
-	getenum_from_conffile(d, "logger:loglevel", (int*)&config->logger_conf.loglevel, loglevels, 7, ERROR);
+	getenum_from_conffile(d, "logger:loglevel", (int*)&config->logger_conf.loglevel, get_loglevels(), 7, ERROR);
 
 	// screencast
 	getstring_from_conffile(d, "screencast:output_name", &config->screencast_conf.output_name, NULL);

@@ -12,6 +12,7 @@ struct logger_properties {
 
 void init_logger(FILE *dst, enum LOGLEVEL level);
 enum LOGLEVEL get_loglevel(const char *level);
+const char** get_loglevels();
 void logprint(enum LOGLEVEL level, char *msg, ...);
 
 #endif

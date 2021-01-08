@@ -35,6 +35,10 @@ enum LOGLEVEL get_loglevel(const char *level) {
 	abort();
 }
 
+const char** get_loglevels() {
+	return loglevels;
+}
+
 void logprint(enum LOGLEVEL level, char *msg, ...) {
 	if (!logprops.dst) {
 		fprintf(stderr, "Logger has been called, but was not initialized\n");
