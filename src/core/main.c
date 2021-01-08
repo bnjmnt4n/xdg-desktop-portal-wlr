@@ -56,10 +56,10 @@ int main(int argc, char *argv[]) {
 			config.logger_conf.loglevel = get_loglevel(optarg);
 			break;
 		case 'o':
-			config.screencast_conf.output_name = optarg;
+			config.screencast_conf.output_name = strdup(optarg);
 			break;
 		case 'c':
-			config.conf.configfile = optarg;
+			config.conf.configfile = strdup(optarg);
 			break;
 		case 'h':
 			return xdpw_usage(stdout, EXIT_SUCCESS);
