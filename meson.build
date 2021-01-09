@@ -20,6 +20,10 @@ add_project_arguments(cc.get_supported_arguments([
 	'-D_POSIX_C_SOURCE=200809L',
 ]), language: 'c')
 
+prefix = get_option('prefix')
+sysconfdir = get_option('sysconfdir')
+add_project_arguments('-DSYSCONFDIR="/@0@"'.format(join_paths(prefix, sysconfdir)), language : 'c')
+
 inc = include_directories('include')
 
 rt = cc.find_library('rt')
