@@ -69,7 +69,19 @@ static char *expand_path(char *path, bool realloc) {
 			if (realloc) {
 				free(path);
 			}
-			return strdup(p.we_wordv[0]);
+			char *expand;
+			size_t explen = 0;
+			for (size_t i = 0; i < p.we_wordc; i++) {
+				explen += strlen(p.we_wordv[i]) + 1;
+			}
+			expand = (char*)calloc(explen, sizeof(char));
+			for (size_t i = 0; i < (p.we_wordc - 1); i++) {
+				strcat(expand, p.we_wordv[i]);
+				strcat(expand, " ");
+			}
+			strcat(expand, p.we_wordv[p.we_wordc - 1]);
+			wordfree(&p);
+			return expand;
 		}
 		if (realloc) {
 			free(path);
