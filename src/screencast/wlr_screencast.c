@@ -452,7 +452,7 @@ struct xdpw_wlr_output *wlr_output_chooser_default(struct wl_list *output_list) 
 			return output;
 		}
 	}
-	return xdpw_wlr_output_first(output_list);
+	return NULL;
 }
 
 struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct xdpw_screencast_context *ctx) {
@@ -478,7 +478,7 @@ struct xdpw_wlr_output *xdpw_wlr_output_chooser(struct xdpw_screencast_context *
 				logprint(DEBUG, "wlroots: output chooser selects %s", output->name);
 				return output;
 			}
-			return xdpw_wlr_output_first(&ctx->output_list);
+			return NULL;
 		}
 		return wlr_output_chooser_default(&ctx->output_list);
 	}
